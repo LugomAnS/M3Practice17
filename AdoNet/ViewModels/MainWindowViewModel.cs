@@ -14,7 +14,6 @@ using System.Windows;
 using System.Windows.Input;
 using System.Windows.Media.Animation;
 using AdoNet.Infrastructure;
-using DataProvider;
 using EFAccess;
 using EFAccess.Models;
 using EFSQL;
@@ -72,7 +71,7 @@ namespace AdoNet.ViewModels
         private string accessConnectionStatus = ConnectionState.Closed.ToString();
         public string AccessConnectionStatus
         {
-            get => accessConnectionsString;
+            get => accessConnectionStatus;
             set => Set(ref accessConnectionsString, value);
         }
 
@@ -283,6 +282,7 @@ namespace AdoNet.ViewModels
 
             sqlEf = new DALsqlDB();
             SQLConnectionString = sqlEf.Connection;
+            sqlEf.SqlConnectionStateChange += SQLConnectionStatusChange;
 
             accessDBEF = new DALAccessDB();
             AccessConnectionString = accessDBEF.ConnectionString;
@@ -331,28 +331,16 @@ namespace AdoNet.ViewModels
 
         private void OnAddNewClientCommandExecute(object p)
         {
-            //DataTable tmpTable;
+            EFSQL.Model.Clients newClient = new Clients();
 
-            //if (Clients == null)
-            //{
-            //    tmpTable = sqlConnection.GetClients();
-            //}
-            //else
-            //{
-            //    tmpTable = Clients;
-            //}
+            newClient.ClientName = this.ClientName;
+            newClient.ClientPatronymic = this.ClientPatronymic;
+            newClient.ClientSurname = this.ClientSurname;
+            newClient.Phone = this.Phone;
+            newClient.EMail = this.EMail;
 
-            //// Плохое решение, при изменении структуры таблица придеться дописывать
-            //DataRow client = tmpTable.NewRow();
-            //client[1] = ClientName;
-            //client[2] = ClientSurname;
-            //client[3] = ClientPatronymic;
-            //client[4] = Phone;
-            //client[5] = EMail;
-
-            //tmpTable.Rows.Add(client);
-
-            //sqlConnection.UpdateDBInformationAsync(tmpTable);
+            sqlEf.AddNewClient(newClient);
+            this.OnGetAllClientsCommandExecute(null);
         }
 
         private bool CanAddNewClientCommandExecute(object p)
@@ -379,8 +367,12 @@ namespace AdoNet.ViewModels
 
         private void OnDeleteClientRecordExecute(object p)
         {
-            //((DataRowView)p).Row.Delete();
-            //sqlConnection.UpdateDBInformationAsync(Clients);
+            if (SelectedClient != null)
+            {
+                sqlEf.DeleteClient(SelectedClient);
+                this.OnGetAllClientsCommandExecute(null);
+            }
+            
         }
 
         private bool CanDeleteClientRecordCommandExecute(object p) => p != null;

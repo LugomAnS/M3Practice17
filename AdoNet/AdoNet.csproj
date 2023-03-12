@@ -10,7 +10,6 @@
   <ItemGroup>
     <ProjectReference Include="..\EFAccess\EFAccess.csproj" />
     <ProjectReference Include="..\EFSQL\EFSQL.csproj" />
-    <ProjectReference Include="..\SQLDataProvider\DataProvider.csproj" />
   </ItemGroup>
 
   <ItemGroup>
