@@ -57,6 +57,24 @@ namespace AdoNet.ViewModels
         private DALAccessDB accessDBEF;
         #endregion
 
+        #region Access Connection string
+        private string accessConnectionsString;
+        public string AccessConnectionString
+        {
+            get => accessConnectionsString;
+            set => Set(ref accessConnectionsString, value);
+        }
+        #endregion
+
+        #region Access Connection status
+        private string accessConnectionStatus = ConnectionState.Closed.ToString();
+        public string AccessConnectionStatus
+        {
+            get => accessConnectionsString;
+            set => Set(ref accessConnectionsString, value);
+        }
+
+        #endregion
 
         #region Данные о клиентах
         private DataTable clients;
@@ -266,6 +284,8 @@ namespace AdoNet.ViewModels
             sqlConnection.ConnectionState += SQLConnectionStatusChange;
 
             accessDBEF = new DALAccessDB();
+            AccessConnectionString = accessDBEF.ConnectionString;
+            accessDBEF.ConnectionStatus += AccessConnectionStatusChange;
 
         }
 
@@ -275,7 +295,7 @@ namespace AdoNet.ViewModels
         }
         private void AccessConnectionStatusChange(string status)
         {
-            
+            AccessConnectionStatus = status;
         }
         private void GetSelectedClientPurchases(string clientEmail)
         {
@@ -288,8 +308,7 @@ namespace AdoNet.ViewModels
         public ICommand SQLConnectionSet { get; }
         private void OnSQLConnectionSetExecute(object p)
         {
-            sqlConnection.OpenConnectionAsync();
-            
+            sqlConnection.OpenConnectionAsync();  
         }
         private bool CanSQLConnectionSetExecute(object p) => true;
 
@@ -371,13 +390,6 @@ namespace AdoNet.ViewModels
         public ICommand AddNewPurchase { get; }
         private void OnAddNewPurchaseExecute(object p)
         {
-            //DataRow purchase = Purchases.NewRow();
-            //purchase[1] = SelectedClient["eMail"];
-            //purchase[2] = ItemCode;
-            //purchase[3] = ItemName;
-
-            //Purchases.Rows.Add(purchase);
-            //accessConnection.AddNewPurchase(Purchases);
             EFAccess.Models.Purchases newPurchase = new Purchases();
             newPurchase.ItemName = this.ItemName;
             newPurchase.ItemCode = int.Parse(this.ItemCode);
