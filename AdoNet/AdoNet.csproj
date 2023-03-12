@@ -28,7 +28,7 @@
 
   <ItemGroup>
     <None Update="AccessDB.accdb">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
   </ItemGroup>
 

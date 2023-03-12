@@ -89,9 +89,11 @@
               
             </DataGrid>
 
-            <DataGrid Grid.Row="1" Grid.Column="0" ItemsSource="{Binding Purchases.DefaultView}" 
+            <DataGrid Grid.Row="1" Grid.Column="0" ItemsSource="{Binding Purchases}" 
                       AutoGenerateColumns="True"
-                      CanUserAddRows="False">
+                      CanUserAddRows="False"
+                      CanUserDeleteRows="False"
+                      IsReadOnly="True">
                 
             </DataGrid>
 

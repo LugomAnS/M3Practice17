@@ -11,7 +11,7 @@ using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace DataProvider
 {
-    public class AccessConnectionDB
+    internal class AccessConnectionDB
     {
         private OleDbConnectionStringBuilder connectionString;
         private OleDbDataAdapter accessData;
