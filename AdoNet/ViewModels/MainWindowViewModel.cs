@@ -247,23 +247,10 @@ namespace AdoNet.ViewModels
 
         #endregion
 
-
-        #region Статус обработки запроса
-        private string requestStatus;
-
-        public string RequestStatus
-        {
-            get => requestStatus;
-            set => Set(ref requestStatus, value);
-        }
-        #endregion
         #endregion
 
         public MainWindowViewModel()
         {
-            SQLConnectionSet = new Command(OnSQLConnectionSetExecute,
-                                           CanSQLConnectionSetExecute);
-
             GetAllClientsCommand = new Command(OnGetAllClientsCommandExecute,
                                                CanGetAllClientsCommandExecute);
 
@@ -304,16 +291,6 @@ namespace AdoNet.ViewModels
         }
 
         #region Команды
-
-        #region Установить соединение
-        public ICommand SQLConnectionSet { get; }
-        private void OnSQLConnectionSetExecute(object p)
-        {
-             
-        }
-        private bool CanSQLConnectionSetExecute(object p) => true;
-
-        #endregion
 
         #region Получить клиентов
         public ICommand GetAllClientsCommand { get; }

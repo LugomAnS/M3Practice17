@@ -26,8 +26,6 @@
     
     <DockPanel LastChildFill="True" Margin="5">
         <StackPanel Orientation="Horizontal" DockPanel.Dock="Top">
-            <Button Content="Проверить соединение" Margin="5"
-                    Command="{Binding SQLConnectionSet}"/>
             <Button Content="Обновить данные" Margin="5" 
                     Command="{Binding GetAllClientsCommand}"/>
             <Button Content="Удалить клиента" Margin="5"
