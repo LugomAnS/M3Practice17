@@ -26,8 +26,6 @@
     
     <DockPanel LastChildFill="True" Margin="5">
         <StackPanel Orientation="Horizontal" DockPanel.Dock="Top">
-            <Button Content="Проверить соединение" Margin="5"
-                    Command="{Binding SQLConnectionSet}"/>
             <Button Content="Обновить данные" Margin="5" 
                     Command="{Binding GetAllClientsCommand}"/>
             <Button Content="Удалить клиента" Margin="5"
@@ -67,7 +65,7 @@
                 <ColumnDefinition Width="0.4*"/>
             </Grid.ColumnDefinitions>
 
-            <DataGrid Grid.Row="0" Grid.Column="0" ItemsSource="{Binding Clients.DefaultView}"
+            <DataGrid Grid.Row="0" Grid.Column="0" ItemsSource="{Binding Clients}"
                       AutoGenerateColumns="true"
                       SelectedItem="{Binding SelectedClient}"
                       CanUserAddRows="False">
@@ -89,9 +87,11 @@
               
             </DataGrid>
 
-            <DataGrid Grid.Row="1" Grid.Column="0" ItemsSource="{Binding Purchases.DefaultView}" 
+            <DataGrid Grid.Row="1" Grid.Column="0" ItemsSource="{Binding Purchases}" 
                       AutoGenerateColumns="True"
-                      CanUserAddRows="False">
+                      CanUserAddRows="False"
+                      CanUserDeleteRows="False"
+                      IsReadOnly="True">
                 
             </DataGrid>
 
@@ -133,8 +133,8 @@
                     </StackPanel>
 
                     <StackPanel Orientation="Vertical">
-                        <TextBlock Margin="1" Text="{Binding SelectedClient.Row.ItemArray[2]}" />
-                        <TextBlock Margin="1" Text="{Binding SelectedClient.Row.ItemArray[5]}"/>
+                        <TextBlock Margin="1" Text="{Binding SelectedClient.ClientName}" />
+                        <TextBlock Margin="1" Text="{Binding SelectedClient.EMail}"/>
                         <TextBox Text="{Binding ItemCode, UpdateSourceTrigger=PropertyChanged}"/>
                         <TextBox Text="{Binding ItemName, UpdateSourceTrigger=PropertyChanged}"/>
                     </StackPanel>

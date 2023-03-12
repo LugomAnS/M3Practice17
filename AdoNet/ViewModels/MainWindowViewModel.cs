@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Data;
 using System.Data.SqlClient;
@@ -13,7 +14,11 @@ using System.Windows;
 using System.Windows.Input;
 using System.Windows.Media.Animation;
 using AdoNet.Infrastructure;
-using DataProvider;
+using EFAccess;
+using EFAccess.Models;
+using EFSQL;
+using EFSQL.Model;
+using Microsoft.EntityFrameworkCore;
 
 namespace AdoNet.ViewModels
 {
@@ -36,8 +41,8 @@ namespace AdoNet.ViewModels
         }
         #endregion
 
-        #region SQL соединение
-        private SQLConnectionDB sqlConnection;
+        #region EF SQL
+        private DALsqlDB sqlEf;
         #endregion
 
         #region SQL строка соединения
@@ -49,27 +54,32 @@ namespace AdoNet.ViewModels
         }
         #endregion
 
-        #region Статус Access соединения
+        #region Access EF
+        private DALAccessDB accessDBEF;
+        #endregion
+
+        #region Access Connection string
+        private string accessConnectionsString;
+        public string AccessConnectionString
+        {
+            get => accessConnectionsString;
+            set => Set(ref accessConnectionsString, value);
+        }
+        #endregion
+
+        #region Access Connection status
         private string accessConnectionStatus = ConnectionState.Closed.ToString();
         public string AccessConnectionStatus
         {
             get => accessConnectionStatus;
-            set => Set(ref accessConnectionStatus, value);
+            set => Set(ref accessConnectionsString, value);
         }
-        #endregion
 
-        #region Access соединение
-        private AccessConnectionDB accessConnection;
         #endregion
-
-        #region Access строка соединение
-        public string AccessConnectionString { get; set; }
-        #endregion
-
 
         #region Данные о клиентах
-        private DataTable clients;
-        public DataTable Clients
+        private BindingList<Clients> clients;
+        public BindingList<Clients> Clients
         {
             get => clients;
             set => Set(ref clients, value);
@@ -77,8 +87,8 @@ namespace AdoNet.ViewModels
         #endregion
 
         #region Выбранный клиент
-        private DataRowView selectedClient;
-        public DataRowView SelectedClient
+        private Clients selectedClient;
+        public Clients SelectedClient
         {
             get => selectedClient;
             set
@@ -86,7 +96,7 @@ namespace AdoNet.ViewModels
                 Set(ref selectedClient, value);
                 if (value != null)
                 {
-                    GetSelectedClientPurchases(value.Row.ItemArray[5].ToString());
+                    GetSelectedClientPurchases(value.EMail);
                 }
                 if (value == null)
                 {
@@ -194,8 +204,8 @@ namespace AdoNet.ViewModels
         #endregion
 
         #region Данные о покупках
-        private DataTable purchases;
-        public DataTable Purchases
+        private List<Purchases> purchases;
+        public List<Purchases> Purchases
         {
             get => purchases;
             set => Set(ref purchases, value);
@@ -237,23 +247,10 @@ namespace AdoNet.ViewModels
 
         #endregion
 
-
-        #region Статус обработки запроса
-        private string requestStatus;
-
-        public string RequestStatus
-        {
-            get => requestStatus;
-            set => Set(ref requestStatus, value);
-        }
-        #endregion
         #endregion
 
         public MainWindowViewModel()
         {
-            SQLConnectionSet = new Command(OnSQLConnectionSetExecute,
-                                           CanSQLConnectionSetExecute);
-
             GetAllClientsCommand = new Command(OnGetAllClientsCommandExecute,
                                                CanGetAllClientsCommandExecute);
 
@@ -270,13 +267,13 @@ namespace AdoNet.ViewModels
             AddNewPurchase = new Command(OnAddNewPurchaseExecute,
                                          CanAddNewPurchaseExecute);
 
-            sqlConnection = new SQLConnectionDB();
-            SQLConnectionString = sqlConnection.SQLConnectionString;
-            sqlConnection.ConnectionState += SQLConnectionStatusChange;
+            sqlEf = new DALsqlDB();
+            SQLConnectionString = sqlEf.Connection;
+            sqlEf.SqlConnectionStateChange += SQLConnectionStatusChange;
 
-            accessConnection = new AccessConnectionDB();
-            AccessConnectionString = accessConnection.AccessConnectionsString;
-            accessConnection.ConnectionState += AccessConnectionStatusChange;
+            accessDBEF = new DALAccessDB();
+            AccessConnectionString = accessDBEF.ConnectionString;
+            accessDBEF.ConnectionStatus += AccessConnectionStatusChange;
 
         }
 
@@ -290,27 +287,16 @@ namespace AdoNet.ViewModels
         }
         private void GetSelectedClientPurchases(string clientEmail)
         {
-            Purchases = accessConnection.GetClientPurchases(clientEmail); 
+            Purchases = (accessDBEF.GetAllPurchases().Where(p => p.EMail == clientEmail)).ToList();
         }
 
         #region Команды
-
-        #region Установить соединение
-        public ICommand SQLConnectionSet { get; }
-        private void OnSQLConnectionSetExecute(object p)
-        {
-            sqlConnection.OpenConnectionAsync();
-            accessConnection.OpenConnectionAsync();
-        }
-        private bool CanSQLConnectionSetExecute(object p) => true;
-
-        #endregion
 
         #region Получить клиентов
         public ICommand GetAllClientsCommand { get; }
         private void OnGetAllClientsCommandExecute(object p)
         {
-            Clients = sqlConnection.GetClients();
+            Clients = sqlEf.CetAllClients().Local.ToBindingList();
         }
         private bool CanGetAllClientsCommandExecute(object p)
             => SqlConnectionStatus == ConnectionState.Closed.ToString();
@@ -322,28 +308,16 @@ namespace AdoNet.ViewModels
 
         private void OnAddNewClientCommandExecute(object p)
         {
-            DataTable tmpTable;
+            EFSQL.Model.Clients newClient = new Clients();
 
-            if (Clients == null)
-            {
-                tmpTable = sqlConnection.GetClients();
-            }
-            else
-            {
-                tmpTable = Clients;
-            }
+            newClient.ClientName = this.ClientName;
+            newClient.ClientPatronymic = this.ClientPatronymic;
+            newClient.ClientSurname = this.ClientSurname;
+            newClient.Phone = this.Phone;
+            newClient.EMail = this.EMail;
 
-            // Плохое решение, при изменении структуры таблица придеться дописывать
-            DataRow client = tmpTable.NewRow();
-            client[1] = ClientName;
-            client[2] = ClientSurname;
-            client[3] = ClientPatronymic;
-            client[4] = Phone;
-            client[5] = EMail;
-
-            tmpTable.Rows.Add(client);
-
-            sqlConnection.UpdateDBInformationAsync(tmpTable);
+            sqlEf.AddNewClient(newClient);
+            this.OnGetAllClientsCommandExecute(null);
         }
 
         private bool CanAddNewClientCommandExecute(object p)
@@ -370,8 +344,12 @@ namespace AdoNet.ViewModels
 
         private void OnDeleteClientRecordExecute(object p)
         {
-            ((DataRowView)p).Row.Delete();
-            sqlConnection.UpdateDBInformationAsync(Clients);
+            if (SelectedClient != null)
+            {
+                sqlEf.DeleteClient(SelectedClient);
+                this.OnGetAllClientsCommandExecute(null);
+            }
+            
         }
 
         private bool CanDeleteClientRecordCommandExecute(object p) => p != null;
@@ -382,13 +360,15 @@ namespace AdoNet.ViewModels
         public ICommand AddNewPurchase { get; }
         private void OnAddNewPurchaseExecute(object p)
         {
-            DataRow purchase = Purchases.NewRow();
-            purchase[1] = SelectedClient["eMail"];
-            purchase[2] = ItemCode;
-            purchase[3] = ItemName;
+            EFAccess.Models.Purchases newPurchase = new Purchases();
+            newPurchase.ItemName = this.ItemName;
+            newPurchase.ItemCode = int.Parse(this.ItemCode);
+            newPurchase.EMail = SelectedClient.EMail;
 
-            Purchases.Rows.Add(purchase);
-            accessConnection.AddNewPurchase(Purchases);
+            accessDBEF.AddNewPurchase(newPurchase);
+
+            this.GetSelectedClientPurchases(newPurchase.EMail);
+
         }
         private bool CanAddNewPurchaseExecute(object p) 
             => (p != null) && (!String.IsNullOrEmpty(ItemCode)) 
@@ -403,8 +383,7 @@ namespace AdoNet.ViewModels
 
         private void OnCellEditEndCommandExcute(object p)
         {
-            SelectedClient.Row.BeginEdit();
-            sqlConnection.UpdateDBInformationAsync(Clients);
+            sqlEf.SaveChanges();
         }
 
         #endregion
@@ -418,8 +397,7 @@ namespace AdoNet.ViewModels
             {
                 return;
             }
-            SelectedClient.Row.EndEdit();
-            sqlConnection.UpdateDBInformationAsync(Clients);
+            sqlEf.SaveChanges();
         }
 
 
