@@ -4,7 +4,7 @@ using System.Diagnostics;
 
 namespace DataProvider
 {
-    public class SQLConnectionDB
+    internal class SQLConnectionDB
     {
         private SqlConnectionStringBuilder connString;
         private SqlDataAdapter sqlData;
